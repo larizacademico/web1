@@ -1,4 +1,3 @@
-// src/pages/Perfil.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
@@ -20,11 +19,18 @@ export default function Perfil() {
       const res = await api.get("/api/user/me");
       setName(res.data?.name || "");
       setEmail(res.data?.email || "");
+      
+      // Garante que o localStorage esteja sincronizado ao carregar também
+      if (res.data?.name) {
+        localStorage.setItem("userName", res.data.name);
+      }
+
     } catch (err) {
       console.error(err);
       if (err?.response?.status === 401 || err?.response?.status === 403) {
         alert("Sessão expirada. Faça login novamente.");
         localStorage.removeItem("token");
+        localStorage.removeItem("userName");
         navigate("/");
         return;
       }
@@ -52,12 +58,18 @@ export default function Perfil() {
 
       await api.put("/api/user/me", payload);
 
+      // --- ATUALIZAÇÃO DO NOME NA NAVBAR ---
+      // Atualizamos o localStorage com o novo nome
+      localStorage.setItem("userName", name);
+
       alert("Perfil atualizado com sucesso.");
 
       setCurrentPassword("");
       setNewPassword("");
 
-      await carregarPerfil();
+      // Recarrega a página para que o Navbar pegue o novo nome imediatamente
+      window.location.reload(); 
+
     } catch (err) {
       console.error(err);
       alert(err?.response?.data?.message || "Erro ao salvar perfil.");

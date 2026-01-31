@@ -8,7 +8,10 @@ import com.projetomilhas.backend.entity.UserEntity;
 import com.projetomilhas.backend.repository.CardRepository;
 import com.projetomilhas.backend.repository.ProgramRepository;
 import com.projetomilhas.backend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -16,81 +19,91 @@ import java.util.List;
 public class CardService {
 
     private final CardRepository cardRepository;
-    private final UserRepository userRepository;
     private final ProgramRepository programRepository;
+    private final UserRepository userRepository;
 
     public CardService(CardRepository cardRepository,
-                       UserRepository userRepository,
-                       ProgramRepository programRepository) {
+                       ProgramRepository programRepository,
+                       UserRepository userRepository) {
         this.cardRepository = cardRepository;
-        this.userRepository = userRepository;
         this.programRepository = programRepository;
+        this.userRepository = userRepository;
     }
 
-    // --------------------- LISTA CARTÕES DO USUÁRIO ---------------------
-    public List<CardResponse> list(String userEmail) {
-        UserEntity user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    @Transactional(readOnly = true)
+    public List<CardResponse> list(String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        return cardRepository.findByUserIdWithPrograms(user.getId())
+        // ajuste se seu repo for diferente
+        return cardRepository.findByUserId(user.getId())
                 .stream()
                 .map(CardResponse::fromEntity)
                 .toList();
     }
 
-    // ----------------------- CRIA NOVO CARTÃO ---------------------------
-    public CardResponse create(CreateCardRequest req, String userEmail) {
+    @Transactional
+    public CardResponse create(CreateCardRequest req, String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        UserEntity user = userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+        Card c = new Card();
+        c.setUser(user);
+        apply(req, c);
 
-        Card card = new Card();
-        card.setName(req.getName());
-
-        // --- AQUI ESTAVA FALTANDO! ---
-        // Passa o limite que veio do Frontend para o Banco de Dados
-        card.setLimit(req.getLimit());
-        // -----------------------------
-
-        card.setBrand(req.getBrand());
-        card.setType(req.getType());
-        card.setUser(user);
-
-        if (req.getProgramIds() != null) {
-            req.getProgramIds().forEach(pid -> {
-                Program p = programRepository.findById(pid)
-                        .orElseThrow(() -> new RuntimeException("Programa não encontrado: " + pid));
-                card.addProgram(p);
-            });
-        }
-
-        Card saved = cardRepository.save(card);
-
+        Card saved = cardRepository.save(c);
         return CardResponse.fromEntity(saved);
     }
-    // ADICIONE ESTE MÉTODO NO FINAL DO CardService
-    public void delete(Long id) {
-        if (cardRepository.existsById(id)) {
-            cardRepository.deleteById(id);
-        } else {
-            throw new RuntimeException("Cartão não encontrado para exclusão");
+
+    @Transactional
+    public CardResponse update(Long id, CreateCardRequest req, String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
+
+        Card c = cardRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cartão não encontrado"));
+
+        // garante que só o dono mexe
+        if (!c.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não pode alterar este cartão");
         }
+
+        apply(req, c);
+
+        Card saved = cardRepository.save(c);
+        return CardResponse.fromEntity(saved);
     }
-    // ADICIONE ESTE MÉTODO NO FINAL DO CardService
-    public CardResponse update(Long id, CreateCardRequest req) {
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cartão não encontrado"));
 
-        // Atualiza os dados
-        card.setName(req.getName());
-        card.setLimit(req.getLimit());
-        card.setBrand(req.getBrand());
-        card.setType(req.getType());
+    @Transactional
+    public void delete(Long id, String email) {
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
-        // Se quiser atualizar os programas de milhas também, a lógica seria mais complexa,
-        // mas para nome e limite, isso basta.
+        Card c = cardRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cartão não encontrado"));
 
-        cardRepository.save(card); // O save no JPA serve tanto para criar quanto para atualizar
-        return CardResponse.fromEntity(card);
+        if (!c.getUser().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Você não pode excluir este cartão");
+        }
+
+        cardRepository.delete(c);
+    }
+
+    private void apply(CreateCardRequest req, Card c) {
+        c.setName(req.getName());
+        c.setLimit(req.getLimit());
+        c.setBrand(req.getBrand());
+        c.setType(req.getType());
+        c.setPointsPerDollar(req.getPointsPerDollar());
+
+        // re-vincula programas
+        c.getPrograms().clear();
+
+        List<Program> programs = programRepository.findAllById(req.getProgramIds());
+        if (programs.size() != req.getProgramIds().size()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Programa inválido na lista");
+        }
+
+        programs.forEach(c::addProgram);
     }
 }

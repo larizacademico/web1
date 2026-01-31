@@ -1,77 +1,116 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../services/api";
+
+const BANDEIRAS = ["Visa", "Mastercard", "Elo", "American Express", "Hipercard"];
+const TIPOS = ["Nacional", "Internacional", "Gold", "Platinum", "Black/Infinite"];
 
 export default function Cartoes() {
   const navigate = useNavigate();
   const location = useLocation();
   const cartaoParaEditar = location.state;
 
-  const [nome, setNome] = useState(cartaoParaEditar ? cartaoParaEditar.name : "");
-  const [limite, setLimite] = useState(cartaoParaEditar ? String(cartaoParaEditar.limit ?? "") : "");
+  const [nome, setNome] = useState(cartaoParaEditar?.name ?? "");
+  const [limite, setLimite] = useState(
+    cartaoParaEditar?.limit != null ? String(cartaoParaEditar.limit) : ""
+  );
+
+  // NOVOS CAMPOS
+  const [brand, setBrand] = useState(cartaoParaEditar?.brand ?? "Visa");
+  const [type, setType] = useState(cartaoParaEditar?.type ?? "Platinum");
+  const [pointsPerDollar, setPointsPerDollar] = useState(
+    cartaoParaEditar?.pointsPerDollar != null ? String(cartaoParaEditar.pointsPerDollar) : "1"
+  );
+
   const [programaId, setProgramaId] = useState("");
   const [listaProgramas, setListaProgramas] = useState([]);
-  const [criandoPrograma, setCriandoPrograma] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   function normalizarProgramas(data) {
-    return Array.isArray(data) ? data : Array.isArray(data?.content) ? data.content : [];
+    const arr = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.content)
+        ? data.content
+        : [];
+
+    // dedupe por id (resolve “Livelo repetido 20x”)
+    const map = new Map();
+    for (const p of arr) {
+      if (p?.id != null && !map.has(p.id)) map.set(p.id, p);
+    }
+    return Array.from(map.values());
   }
+
+  const programasOrdenados = useMemo(() => {
+    return [...listaProgramas].sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  }, [listaProgramas]);
 
   useEffect(() => {
     async function carregarProgramas() {
       try {
-        const response = await api.get("/api/programs");
-        const programasArray = normalizarProgramas(response.data);
-
+        setLoading(true);
+        const res = await api.get("/api/programs");
+        const programasArray = normalizarProgramas(res.data);
         setListaProgramas(programasArray);
 
-        // Se está editando e já tem programa vinculado
-        if (cartaoParaEditar && cartaoParaEditar.programs?.length > 0) {
-          setProgramaId(String(cartaoParaEditar.programs[0].id));
+        // se estiver editando, tenta manter o programa que veio do cartão
+        const progDoCartao = cartaoParaEditar?.programs?.[0]?.id;
+
+        if (progDoCartao) {
+          setProgramaId(String(progDoCartao));
           return;
         }
 
-        // Se não está editando e ainda não tem seleção, seleciona o primeiro
-        if (!cartaoParaEditar && (!programaId || programaId === "") && programasArray.length > 0) {
+        // se não tem nada selecionado, auto-seleciona o primeiro
+        if (programasArray.length > 0) {
           setProgramaId(String(programasArray[0].id));
-          return;
-        }
-
-        if (programasArray.length === 0) {
+        } else {
           setProgramaId("");
         }
-      } catch (error) {
-        console.error("Erro ao buscar programas:", error);
+      } catch (e) {
+        console.error("Erro ao buscar programas:", e);
         setListaProgramas([]);
         setProgramaId("");
+      } finally {
+        setLoading(false);
       }
     }
 
     carregarProgramas();
-  }, [cartaoParaEditar, programaId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartaoParaEditar?.id]);
 
   async function salvarCartao(e) {
     e.preventDefault();
 
+    const limitNumber = Number(limite);
+    if (!Number.isFinite(limitNumber) || limitNumber <= 0) {
+      alert("Limite inválido.");
+      return;
+    }
+
+    const ppd = Number(pointsPerDollar);
+    if (!Number.isFinite(ppd) || ppd <= 0) {
+      alert("Pontuação inválida (use algo como 1, 1.5, 2...).");
+      return;
+    }
+
+    const progIdNumber = Number(programaId);
+    if (!Number.isFinite(progIdNumber) || progIdNumber <= 0) {
+      alert("Selecione um programa válido.");
+      return;
+    }
+
+    const dados = {
+      name: nome,
+      limit: limitNumber,
+      brand,
+      type,
+      pointsPerDollar: ppd,
+      programIds: [progIdNumber]
+    };
+
     try {
-      const limitNumber = Number(limite);
-      if (!Number.isFinite(limitNumber)) {
-        alert("Limite inválido.");
-        return;
-      }
-
-      const progIdNumber = Number(programaId);
-      if (!Number.isFinite(progIdNumber) || progIdNumber <= 0) {
-        alert("Selecione um programa válido.");
-        return;
-      }
-
-      const dados = {
-        name: nome,
-        limit: limitNumber,
-        programIds: [progIdNumber]
-      };
-
       if (cartaoParaEditar) {
         await api.put(`/api/cards/${cartaoParaEditar.id}`, dados);
         alert("Cartão atualizado!");
@@ -79,153 +118,173 @@ export default function Cartoes() {
         await api.post("/api/cards", dados);
         alert("Cartão criado!");
       }
-
       navigate("/dashboard");
     } catch (err) {
-      console.error("Erro ao salvar:", err);
-      const msg = err?.response?.data?.message || "Erro ao salvar. Verifique se selecionou um programa.";
-      alert(msg);
+      console.error(err);
+      alert(err?.response?.data?.message || "Erro ao salvar cartão.");
     }
   }
 
   async function criarProgramaTeste() {
     try {
-      if (criandoPrograma) return;
-      setCriandoPrograma(true);
-
-      // Se já existe Livelo (Teste), só seleciona (não duplica)
-      const jaExiste = (Array.isArray(listaProgramas) ? listaProgramas : []).find(
-        p => (p.name || "").toLowerCase() === "livelo (teste)".toLowerCase()
-      );
-      if (jaExiste?.id) {
-        setProgramaId(String(jaExiste.id));
-        alert('Programa "Livelo (Teste)" já existe. Selecionado.');
-        return;
-      }
-
       await api.post("/api/programs", {
         name: "Livelo (Teste)",
         multiplier: 1.0,
         defaultCreditDays: 3
       });
 
-      // Recarrega lista
-      const response = await api.get("/api/programs");
-      const programasArray = normalizarProgramas(response.data);
-
+      const res = await api.get("/api/programs");
+      const programasArray = normalizarProgramas(res.data);
       setListaProgramas(programasArray);
 
-      // Seleciona o criado pelo nome; se não achar, pega o primeiro
-      const achado = programasArray.find(p => (p.name || "") === "Livelo (Teste)");
+      const achado = programasArray.find(p => p.name === "Livelo (Teste)");
       const idParaSelecionar = achado?.id || programasArray[0]?.id;
 
-      if (idParaSelecionar) {
-        setProgramaId(String(idParaSelecionar));
-        alert("Programa criado e selecionado!");
-      } else {
-        setProgramaId("");
-        alert("Programa criado, mas não consegui selecionar automaticamente.");
-      }
+      if (idParaSelecionar) setProgramaId(String(idParaSelecionar));
+
+      alert("Programa criado!");
     } catch (error) {
       console.error(error);
       alert(error?.response?.data?.message || "Erro ao criar programa.");
-    } finally {
-      setCriandoPrograma(false);
     }
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        background: "#222",
-        color: "#fff",
-        padding: "20px"
-      }}
-    >
-      <h2>{cartaoParaEditar ? "Editar Cartão" : "Adicionar Novo Cartão"}</h2>
+    <div style={page.container}>
+      <div style={page.card}>
+        <h2 style={{ marginTop: 0 }}>
+          {cartaoParaEditar ? "Editar Cartão" : "Adicionar Novo Cartão"}
+        </h2>
 
-      <form
-        onSubmit={salvarCartao}
-        style={{ display: "flex", flexDirection: "column", gap: "15px", width: "100%", maxWidth: "350px" }}
-      >
-        <label>Nome do Cartão</label>
-        <input
-          placeholder="Ex: Nubank, Visa Infinite..."
-          value={nome}
-          onChange={e => setNome(e.target.value)}
-          required
-          style={styles.input}
-        />
+        <form onSubmit={salvarCartao} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <label>Nome do Cartão</label>
+          <input
+            placeholder="Ex: Nubank, Visa Infinite..."
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            required
+            style={styles.input}
+          />
 
-        <label>Limite (R$)</label>
-        <input
-          type="number"
-          placeholder="Ex: 5000"
-          value={limite}
-          onChange={e => setLimite(e.target.value)}
-          required
-          style={styles.input}
-        />
+          <label>Limite (R$)</label>
+          <input
+            type="number"
+            placeholder="Ex: 5000"
+            value={limite}
+            onChange={(e) => setLimite(e.target.value)}
+            required
+            style={styles.input}
+          />
 
-        <label>Vincular ao Programa</label>
-        <select value={programaId} onChange={e => setProgramaId(e.target.value)} required style={styles.input}>
-          <option value="" disabled>
-            Selecione...
-          </option>
-          {(Array.isArray(listaProgramas) ? listaProgramas : []).map(prog => (
-            <option key={prog.id} value={String(prog.id)}>
-              {prog.name}
-            </option>
-          ))}
-        </select>
+          <label>Bandeira</label>
+          <select value={brand} onChange={(e) => setBrand(e.target.value)} style={styles.input}>
+            {BANDEIRAS.map((b) => (
+              <option key={b} value={b}>{b}</option>
+            ))}
+          </select>
 
-        {listaProgramas.length === 0 && (
-          <div style={{ textAlign: "center", background: "#444", padding: "10px", borderRadius: "5px" }}>
-            <p style={{ color: "orange", margin: "0 0 10px 0", fontSize: "14px" }}>
-              ⚠️ Nenhum programa encontrado.
-            </p>
-            <button
-              type="button"
-              onClick={criarProgramaTeste}
-              disabled={criandoPrograma}
-              style={{
-                ...styles.btn,
-                background: "#007bff",
-                color: "white",
-                opacity: criandoPrograma ? 0.7 : 1
-              }}
-            >
-              🪄 Criar "Livelo" Automaticamente
+          <label>Tipo</label>
+          <select value={type} onChange={(e) => setType(e.target.value)} style={styles.input}>
+            {TIPOS.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          <label>Pontos por Dólar (ex: 1, 1.5, 2)</label>
+          <input
+            type="number"
+            step="0.1"
+            value={pointsPerDollar}
+            onChange={(e) => setPointsPerDollar(e.target.value)}
+            required
+            style={styles.input}
+          />
+
+          <label>Vincular ao Programa</label>
+          <select
+            value={programaId}
+            onChange={(e) => setProgramaId(e.target.value)}
+            required
+            style={styles.input}
+            disabled={loading}
+          >
+            {loading ? (
+              <option>Carregando...</option>
+            ) : (
+              <>
+                <option value="" disabled>Selecione...</option>
+                {programasOrdenados.map((prog) => (
+                  <option key={prog.id} value={String(prog.id)}>
+                    {prog.name}
+                  </option>
+                ))}
+              </>
+            )}
+          </select>
+
+          {!loading && programasOrdenados.length === 0 && (
+            <div style={page.warnBox}>
+              <div style={{ color: "orange", fontSize: 13, marginBottom: 10 }}>
+                Nenhum programa encontrado. Crie pelo menos um.
+              </div>
+              <button type="button" onClick={criarProgramaTeste} style={{ ...styles.btn, background: "#0d6efd", color: "#fff" }}>
+                Criar "Livelo" (Teste)
+              </button>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+            <button type="button" onClick={() => navigate("/dashboard")} style={{ ...styles.btn, background: "#666" }}>
+              Cancelar
+            </button>
+            <button type="submit" style={{ ...styles.btn, background: "#28a745", color: "#fff" }}>
+              {cartaoParaEditar ? "Salvar" : "Cadastrar"}
             </button>
           </div>
-        )}
-
-        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-          <button type="button" onClick={() => navigate("/dashboard")} style={{ ...styles.btn, background: "#666" }}>
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            style={{
-              ...styles.btn,
-              background: cartaoParaEditar ? "#ffc107" : "#28a745",
-              color: cartaoParaEditar ? "#000" : "#fff"
-            }}
-          >
-            {cartaoParaEditar ? "Salvar" : "Cadastrar"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
 
+const page = {
+  container: {
+    minHeight: "100vh",
+    background: "#222",
+    color: "#fff",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20
+  },
+  card: {
+    width: "100%",
+    maxWidth: 420,
+    background: "#2b2b2b",
+    borderRadius: 10,
+    padding: 20
+  },
+  warnBox: {
+    background: "#444",
+    padding: 12,
+    borderRadius: 8
+  }
+};
+
 const styles = {
-  input: { padding: "12px", borderRadius: "5px", border: "1px solid #555", background: "#333", color: "white" },
-  btn: { flex: 1, padding: "12px", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }
+  input: {
+    padding: "12px",
+    borderRadius: "6px",
+    border: "1px solid #555",
+    background: "#333",
+    color: "white"
+  },
+  btn: {
+    flex: 1,
+    padding: "12px",
+    border: "none",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "bold"
+  }
 };

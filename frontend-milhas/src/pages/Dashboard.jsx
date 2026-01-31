@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar"; // ✅ 1. Import da Navbar
 
 import {
   BarChart,
@@ -63,7 +64,6 @@ export default function Dashboard() {
 
   function extrairFilename(contentDisposition, fallback) {
     if (!contentDisposition) return fallback;
-    // tenta pegar filename=...
     const match = /filename="?([^"]+)"?/i.exec(contentDisposition);
     return match?.[1] || fallback;
   }
@@ -146,187 +146,177 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ background: "#222", color: "#fff", height: "100vh", padding: "20px" }}>
+      <div style={{ background: "#121214", color: "#fff", height: "100vh", padding: "20px" }}>
         Carregando...
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#222", color: "#fff", padding: "20px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h2 style={{ margin: 0 }}>Dashboard - Minhas Milhas</h2>
+    <div style={{ minHeight: "100vh", background: "#121214", color: "#fff" }}>
+      
+      {/* ✅ 2. Navbar inserida aqui (substitui o cabeçalho antigo) */}
+      <Navbar />
 
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <button
-            onClick={() => navigate("/perfil")}
-            style={{ padding: "8px 15px", background: "#6f42c1", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer" }}
-          >
-            Meu perfil
-          </button>
-
-          <button
-            onClick={exportarCSV}
-            style={{ padding: "8px 15px", background: "#0d6efd", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer" }}
-          >
-            Exportar CSV
-          </button>
-
-          <button
-            onClick={exportarPDF}
-            style={{ padding: "8px 15px", background: "#198754", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer" }}
-          >
-            Exportar PDF
-          </button>
-
-          <button
-            onClick={() => navigate("/compras")}
-            style={{ padding: "8px 15px", background: "#007BFF", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer" }}
-          >
-            + Nova Compra
-          </button>
-
-          <button
-            onClick={() => {
-              localStorage.removeItem("token");
-              localStorage.removeItem("userName");
-              navigate("/");
-            }}
-            style={{ padding: "8px 15px", background: "#dc3545", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer" }}
-          >
-            Sair
-          </button>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px", marginBottom: "30px" }}>
-        <div style={{ background: "#333", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #28a745" }}>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#ccc" }}>Total de Pontos (Creditados)</h3>
-          <span style={{ fontSize: "28px", fontWeight: "bold" }}>{resumoPontos.total}</span>
-        </div>
-
-        <div style={{ background: "#333", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #ffc107" }}>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#ccc" }}>Pontos a Receber (Pendentes)</h3>
-          <span style={{ fontSize: "28px", fontWeight: "bold", color: "#ffc107" }}>{resumoPontos.pendente}</span>
-        </div>
-
-        <div style={{ background: "#333", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #007bff" }}>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#ccc" }}>Cartões Ativos</h3>
-          <span style={{ fontSize: "28px", fontWeight: "bold" }}>{cartoes.length}</span>
-        </div>
-
-        <div style={{ background: "#333", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #9c27b0" }}>
-          <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#ccc" }}>Prazo Médio Previsto</h3>
-          <span style={{ fontSize: "28px", fontWeight: "bold" }}>
-            {prazoMedioPrevistoDias ? `${prazoMedioPrevistoDias.toFixed(1)} dias` : "—"}
-          </span>
-        </div>
-      </div>
-
-      {dadosPontosPorCartao.length > 0 && (
-        <div style={{ width: "100%", height: 300, background: "#2a2a2a", padding: "20px", borderRadius: "8px", marginBottom: "30px" }}>
-          <h3 style={{ marginBottom: "20px" }}>Pontos por Cartão</h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={dadosPontosPorCartao}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-              <XAxis dataKey="name" stroke="#ccc" />
-              <YAxis stroke="#ccc" />
-              <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
-              <Legend />
-              <Bar dataKey="pontos" fill="#8884d8" name="Pontos" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px" }}>
-        <div>
-          <div style={{ background: "#333", padding: "20px", borderRadius: "10px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", borderBottom: "1px solid #555", paddingBottom: "10px" }}>
-              <h3>Meus Cartões</h3>
-              <button onClick={() => navigate("/cartoes")} style={{ background: "transparent", border: "none", color: "#007bff", cursor: "pointer", fontSize: "12px" }}>
-                + Adicionar
+      <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+        
+        {/* ✅ 3. Barra de Ferramentas (Botões de Exportar que sobraram) */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+           <h2 style={{ margin: 0, fontSize: "24px" }}>Visão Geral</h2>
+           
+           <div style={{ display: "flex", gap: "10px" }}>
+              <button
+                onClick={exportarCSV}
+                style={{ padding: "8px 15px", background: "#0d6efd", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
+              >
+                📥 Exportar CSV
               </button>
-            </div>
 
-            {cartoes.length === 0 ? (
-              <p style={{ color: "#aaa", textAlign: "center" }}>Nenhum cartão.</p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {cartoes.map((card) => (
-                  <li key={card.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #444" }}>
-                    <div>
-                      <strong>{card.name}</strong>
-                      <div style={{ fontSize: "11px", color: "#aaa" }}>
-                        {card.limit ? `R$ ${card.limit}` : "Sem limite"}
+              <button
+                onClick={exportarPDF}
+                style={{ padding: "8px 15px", background: "#198754", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer", fontWeight: "bold" }}
+              >
+                📄 Exportar PDF
+              </button>
+           </div>
+        </div>
+
+        {/* --- CARDS DE RESUMO --- */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px", marginBottom: "30px" }}>
+          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #28a745" }}>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Total de Pontos (Creditados)</h3>
+            <span style={{ fontSize: "28px", fontWeight: "bold" }}>{resumoPontos.total}</span>
+          </div>
+
+          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #ffc107" }}>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Pontos a Receber (Pendentes)</h3>
+            <span style={{ fontSize: "28px", fontWeight: "bold", color: "#ffc107" }}>{resumoPontos.pendente}</span>
+          </div>
+
+          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #007bff" }}>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Cartões Ativos</h3>
+            <span style={{ fontSize: "28px", fontWeight: "bold" }}>{cartoes.length}</span>
+          </div>
+
+          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #9c27b0" }}>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Prazo Médio Previsto</h3>
+            <span style={{ fontSize: "28px", fontWeight: "bold" }}>
+              {prazoMedioPrevistoDias ? `${prazoMedioPrevistoDias.toFixed(1)} dias` : "—"}
+            </span>
+          </div>
+        </div>
+
+        {/* --- GRÁFICO --- */}
+        {dadosPontosPorCartao.length > 0 && (
+          <div style={{ width: "100%", height: 300, background: "#202024", padding: "20px", borderRadius: "8px", marginBottom: "30px" }}>
+            <h3 style={{ marginBottom: "20px", color: "#e1e1e6" }}>Pontos por Cartão</h3>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dadosPontosPorCartao}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="name" stroke="#ccc" />
+                <YAxis stroke="#ccc" />
+                <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
+                <Legend />
+                <Bar dataKey="pontos" fill="#8257e5" name="Pontos" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* --- TABELAS --- */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "20px" }}>
+          
+          {/* Coluna Cartões */}
+          <div>
+            <div style={{ background: "#202024", padding: "20px", borderRadius: "10px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px", borderBottom: "1px solid #323238", paddingBottom: "10px" }}>
+                <h3>Meus Cartões</h3>
+                <button onClick={() => navigate("/cartoes")} style={{ background: "transparent", border: "none", color: "#007bff", cursor: "pointer", fontSize: "12px" }}>
+                  + Adicionar
+                </button>
+              </div>
+
+              {cartoes.length === 0 ? (
+                <p style={{ color: "#aaa", textAlign: "center" }}>Nenhum cartão.</p>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0 }}>
+                  {cartoes.map((card) => (
+                    <li key={card.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #323238" }}>
+                      <div>
+                        <strong>{card.name}</strong>
+                        <div style={{ fontSize: "11px", color: "#aaa" }}>
+                          {card.limit ? `R$ ${card.limit}` : "Sem limite"}
+                        </div>
                       </div>
-                    </div>
-                    <div style={{ display: "flex", gap: "5px" }}>
-                      <button onClick={() => editarCartao(card)} style={{ background: "none", border: "none", cursor: "pointer" }}>✏️</button>
-                      <button onClick={() => excluirCartao(card.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>🗑️</button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                      <div style={{ display: "flex", gap: "5px" }}>
+                        <button onClick={() => editarCartao(card)} style={{ background: "none", border: "none", cursor: "pointer" }}>✏️</button>
+                        <button onClick={() => excluirCartao(card.id)} style={{ background: "none", border: "none", cursor: "pointer" }}>🗑️</button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+
+          {/* Coluna Histórico */}
+          <div>
+            <div style={{ background: "#202024", padding: "20px", borderRadius: "10px" }}>
+              <h3 style={{ borderBottom: "1px solid #323238", paddingBottom: "10px", marginBottom: "15px" }}>
+                Histórico de Aquisições
+              </h3>
+
+              {compras.length === 0 ? (
+                <p style={{ textAlign: "center", color: "#aaa", padding: "20px" }}>Nenhuma compra registrada.</p>
+              ) : (
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                  <thead>
+                    <tr style={{ textAlign: "left", color: "#aaa", borderBottom: "1px solid #323238" }}>
+                      <th style={{ padding: "10px" }}>Data</th>
+                      <th>Descrição</th>
+                      <th>Cartão</th>
+                      <th>Pontos</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {compras.map((compra) => {
+                      const status = (compra.status || "").toUpperCase();
+                      const cardName = compra.cardName || compra.card?.name || (compra.cardId ? `Cartão ${compra.cardId}` : "N/A");
+                      const dataCompra = compra.purchaseDate || compra.createdAt;
+
+                      return (
+                        <tr key={compra.id} style={{ borderBottom: "1px solid #323238" }}>
+                          <td style={{ padding: "10px" }}>
+                            {dataCompra ? new Date(dataCompra).toLocaleDateString("pt-BR") : "-"}
+                          </td>
+                          <td>{compra.description || "—"}</td>
+                          <td>{cardName}</td>
+                          <td style={{ fontWeight: "bold", color: "#fff" }}>+{compra.pointsGenerated || 0}</td>
+                          <td>
+                            <span
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "4px",
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                background: status === "PENDING" ? "#ffc107" : "#28a745",
+                                color: "#000"
+                              }}
+                            >
+                              {status === "PENDING" ? "PENDENTE" : "CREDITADO"}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
 
-        <div>
-          <div style={{ background: "#333", padding: "20px", borderRadius: "10px" }}>
-            <h3 style={{ borderBottom: "1px solid #555", paddingBottom: "10px", marginBottom: "15px" }}>
-              Histórico de Aquisições
-            </h3>
-
-            {compras.length === 0 ? (
-              <p style={{ textAlign: "center", color: "#aaa", padding: "20px" }}>Nenhuma compra registrada.</p>
-            ) : (
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
-                <thead>
-                  <tr style={{ textAlign: "left", color: "#aaa", borderBottom: "1px solid #444" }}>
-                    <th style={{ padding: "10px" }}>Data</th>
-                    <th>Descrição</th>
-                    <th>Cartão</th>
-                    <th>Pontos</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {compras.map((compra) => {
-                    const status = (compra.status || "").toUpperCase();
-                    const cardName = compra.cardName || compra.card?.name || (compra.cardId ? `Cartão ${compra.cardId}` : "N/A");
-                    const dataCompra = compra.purchaseDate || compra.createdAt;
-
-                    return (
-                      <tr key={compra.id} style={{ borderBottom: "1px solid #444" }}>
-                        <td style={{ padding: "10px" }}>
-                          {dataCompra ? new Date(dataCompra).toLocaleDateString("pt-BR") : "-"}
-                        </td>
-                        <td>{compra.description || "—"}</td>
-                        <td>{cardName}</td>
-                        <td style={{ fontWeight: "bold", color: "#fff" }}>+{compra.pointsGenerated || 0}</td>
-                        <td>
-                          <span
-                            style={{
-                              padding: "3px 8px",
-                              borderRadius: "4px",
-                              fontSize: "11px",
-                              fontWeight: "bold",
-                              background: status === "PENDING" ? "#ffc107" : "#28a745",
-                              color: "#000"
-                            }}
-                          >
-                            {status === "PENDING" ? "PENDENTE" : "CREDITADO"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
       </div>
     </div>
   );

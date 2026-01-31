@@ -25,4 +25,12 @@ public class ExportController {
         }
         exportService.exportComprasCSV(principal.getName(), response);
     }
+
+    @GetMapping("/compras/pdf")
+    public void exportComprasPDF(Principal principal, HttpServletResponse response) {
+        if (principal == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado");
+        }
+        exportService.exportComprasPDF(principal.getName(), response);
+    }
 }
