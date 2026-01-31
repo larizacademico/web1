@@ -4,6 +4,8 @@ import Cadastro from "./pages/Cadastro";
 import Dashboard from "./pages/Dashboard";
 import Cartoes from "./pages/Cartoes";
 import Compras from "./pages/Compras";
+import Perfil from "./pages/Perfil";
+
 
 import EsqueciSenha from "./pages/EsqueciSenha";
 import ResetarSenha from "./pages/ResetarSenha";
@@ -17,6 +19,7 @@ export default function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/cartoes" element={<Cartoes />} />
         <Route path="/compras" element={<Compras />} />
+        <Route path="/perfil" element={<Perfil />} />
 
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/resetar-senha" element={<ResetarSenha />} />

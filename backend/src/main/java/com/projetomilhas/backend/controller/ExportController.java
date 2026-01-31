@@ -19,12 +19,10 @@ public class ExportController {
     }
 
     @GetMapping("/compras/csv")
-    public void exportComprasCSV(Principal principal,
-                                 HttpServletResponse response) {
+    public void exportComprasCSV(Principal principal, HttpServletResponse response) {
         if (principal == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não autenticado");
         }
-
         exportService.exportComprasCSV(principal.getName(), response);
     }
 }

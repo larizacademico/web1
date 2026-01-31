@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -27,53 +28,59 @@ public class ExportService {
     }
 
     public void exportComprasCSV(String email, HttpServletResponse response) {
-
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
 
         List<Purchase> compras = purchaseRepository.findByUserId(user.getId());
 
         try {
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             response.setContentType("text/csv; charset=UTF-8");
             response.setHeader(
                     "Content-Disposition",
                     "attachment; filename=compras-" + LocalDate.now() + ".csv"
             );
 
+            // BOM UTF-8 para Excel não quebrar acentos
+            response.getOutputStream().write(0xEF);
+            response.getOutputStream().write(0xBB);
+            response.getOutputStream().write(0xBF);
+
             PrintWriter writer = response.getWriter();
 
-            // Cabeçalho
-            writer.println("Data,Valor,Pontos,Status,Cartao,Descricao");
+            // Cabeçalho com acento
+            writer.println("Data,Valor,Pontos,Status,Cartão,Descrição");
 
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
             for (Purchase p : compras) {
-
                 String data = p.getPurchaseDate() != null ? p.getPurchaseDate().format(fmt) : "";
                 String cartao = p.getCard() != null ? p.getCard().getName() : "";
                 String descricao = p.getDescription() != null ? p.getDescription() : "";
 
-                // Escapa aspas duplas para CSV
-                descricao = descricao.replace("\"", "\"\"");
-
-                writer.printf(
-                        "\"%s\",%.2f,%d,%s,\"%s\",\"%s\"%n",
-                        data,
-                        p.getAmount(),
-                        p.getPointsGenerated(),
-                        p.getStatus(),
-                        cartao,
-                        descricao
+                writer.printf("%s,%s,%s,%s,%s,%s%n",
+                        csv(data),
+                        csv(String.format("%.2f", p.getAmount())),
+                        csv(String.valueOf(p.getPointsGenerated())),
+                        csv(String.valueOf(p.getStatus())),
+                        csv(cartao),
+                        csv(descricao)
                 );
             }
 
             writer.flush();
-
         } catch (Exception ex) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
                     "Erro ao gerar CSV"
             );
         }
+    }
+
+    // CSV safe: aspas + quebra de linha + vírgula
+    private String csv(String s) {
+        if (s == null) return "\"\"";
+        String v = s.replace("\"", "\"\"");
+        return "\"" + v + "\"";
     }
 }
