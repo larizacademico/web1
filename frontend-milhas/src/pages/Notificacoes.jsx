@@ -16,22 +16,23 @@ export default function Notificacoes() {
       .catch(err => console.error("Erro ao buscar notificações", err));
   }
 
-  async function marcarComoLida(id) {
-    // Atualiza na tela imediatamente (efeito visual rápido)
+  async function marcarComoLida(id, jaLida) {
+    if (jaLida) return;
+
+    // Atualização Otimista (Muda na hora na tela)
     const novaLista = notificacoes.map(n => 
       n.id === id ? { ...n, read: true } : n
     );
     setNotificacoes(novaLista);
 
-    // Avisa o backend
+    // Envia para o banco
     try {
       await api.put(`/api/notifications/${id}/read`);
     } catch (error) {
-      console.error("Erro ao salvar status de leitura", error);
+      console.error("Erro ao salvar status", error);
     }
   }
 
-  // Formata a data que vem do Java (ex: 2026-01-30T10:00:00)
   function formatarData(dataISO) {
     if (!dataISO) return "";
     const data = new Date(dataISO);
@@ -44,9 +45,8 @@ export default function Notificacoes() {
     <div style={{ minHeight: "100vh", background: "#121214", color: "#e1e1e6", padding: "20px", display: "flex", justifyContent: "center" }}>
       <div style={{ width: "100%", maxWidth: "600px" }}>
         
-        {/* Cabeçalho */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ fontSize: "24px" }}>Notificações</h2>
+          <h2 style={{ fontSize: "24px", color: "#fff" }}>Notificações</h2>
           <button 
             onClick={() => navigate("/dashboard")}
             style={{ padding: "8px 16px", background: "#29292e", color: "#fff", border: "none", borderRadius: "5px", cursor: "pointer" }}
@@ -55,27 +55,30 @@ export default function Notificacoes() {
           </button>
         </div>
 
-        {/* Lista */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           
           {notificacoes.length === 0 && (
             <div style={{ textAlign: "center", padding: "40px", color: "#777" }}>
-              <p>Nenhuma notificação.</p>
+              <p>Nenhuma notificação encontrada.</p>
             </div>
           )}
 
           {notificacoes.map(n => (
             <div 
               key={n.id} 
+              onClick={() => marcarComoLida(n.id, n.read)}
               style={{
                 background: "#202024",
                 padding: "15px",
                 borderRadius: "8px",
-                borderLeft: n.read ? "4px solid #323238" : "4px solid #04d361", // Verde se nova, Cinza se lida
+                // Lógica visual: Verde = Nova / Cinza = Lida
+                borderLeft: n.read ? "4px solid #323238" : "4px solid #04d361", 
                 opacity: n.read ? 0.6 : 1,
+                cursor: n.read ? "default" : "pointer",
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center"
+                alignItems: "center",
+                transition: "0.2s"
               }}
             >
               <div>
@@ -85,13 +88,9 @@ export default function Notificacoes() {
               </div>
 
               {!n.read && (
-                <button 
-                  onClick={() => marcarComoLida(n.id)}
-                  title="Marcar como lida"
-                  style={{ background: "transparent", border: "1px solid #04d361", color: "#04d361", borderRadius: "50%", width: "30px", height: "30px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-                >
-                  ✓
-                </button>
+                <div title="Marcar como lida" style={{ color: "#04d361", fontSize: "20px" }}>
+                  ●
+                </div>
               )}
             </div>
           ))}

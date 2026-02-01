@@ -35,12 +35,16 @@ export default function Navbar() {
         <Link to="/dashboard" style={styles.link}>
           Início
         </Link>
-        
+
+        {/* ✅ NOVO: Meus Cartões */}
+        <Link to="/meus-cartoes" style={styles.link}>
+          Meus Cartões
+        </Link>
+
         <Link to="/compras" style={styles.link}>
           Nova Compra
         </Link>
-        
-        {/* ✅ AGORA ESTÁ CLICÁVEL NOVAMENTE */}
+
         <Link to="/notificacoes" style={styles.link}>
           Notificações
         </Link>
@@ -93,7 +97,7 @@ const styles = {
     fontSize: "15px",
     fontWeight: "500",
     transition: "color 0.2s",
-    cursor: "pointer" // Garante a mãozinha do mouse
+    cursor: "pointer"
   },
   btnSair: {
     padding: "8px 16px",

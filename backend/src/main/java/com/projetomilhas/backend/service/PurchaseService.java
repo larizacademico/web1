@@ -24,6 +24,7 @@ public class PurchaseService {
     private final CardRepository cardRepository;
     private final ProgramRepository programRepository;
     private final PontosService pontosService;
+    private final NotificationService notificationService;
 
     // --------- CREATE ----------
     @Transactional
@@ -39,7 +40,20 @@ public class PurchaseService {
             throw new IllegalArgumentException("Cartão não pertence ao usuário.");
         }
 
-        // Se o frontend não mandar o Programa, pega o padrão do cartão
+        // =================================================================================
+        // 🛑 ✅ NOVA VALIDAÇÃO DE LIMITE
+        Double totalGasto = purchaseRepository.somarGastosPorCartao(card.getId());
+        Double valorNovaCompra = request.getAmount();
+        Double limiteCartao = card.getLimit();
+
+        if ((totalGasto + valorNovaCompra) > limiteCartao) {
+            Double disponivel = limiteCartao - totalGasto;
+            throw new IllegalArgumentException("Compra recusada! Limite insuficiente. Disponível: R$ " + disponivel);
+        }
+        // =================================================================================
+
+
+        // Lógica do Programa de Fidelidade
         Program program;
         if (request.getProgramId() != null) {
             program = programRepository.findById(request.getProgramId())
@@ -61,23 +75,31 @@ public class PurchaseService {
         purchase.setProgram(program);
         purchase.setAmount(request.getAmount());
         purchase.setDescription(request.getDescription());
-
-        // Salva o caminho do comprovante
         purchase.setReceiptPath(imageUrl);
-
         purchase.setStatus(PurchaseStatus.PENDING);
 
-        long pontosGerados = pontosService.calcularPontos(
-                request.getAmount(),
-                program.getMultiplier()
-        );
+        long pontosGerados = pontosService.calcularPontos(request.getAmount(), card);
         purchase.setPointsGenerated(pontosGerados);
 
-        LocalDateTime creditDate = LocalDateTime.now()
-                .plusDays(program.getDefaultCreditDays());
+
+        // 👇👇👇 AQUI ESTÁ A ALTERAÇÃO PARA O TESTE RÁPIDO 👇👇👇
+
+        // Linha original (DESATIVADA TEMPORARIAMENTE):
+        // LocalDateTime creditDate = LocalDateTime.now().plusDays(program.getDefaultCreditDays());
+
+        // Linha de Teste (ATIVA - Define a data para 1 minuto atrás):
+        LocalDateTime creditDate = LocalDateTime.now().minusMinutes(1);
+
         purchase.setExpectedCreditDate(creditDate);
+        // 👆👆👆 FIM DA ALTERAÇÃO 👆👆👆
+
 
         purchaseRepository.save(purchase);
+
+        // Notificação de Sucesso
+        String titulo = "Compra em Análise 🕒";
+        String msg = "Sua compra de R$ " + request.getAmount() + " gerou " + pontosGerados + " pontos (Pendentes).";
+        notificationService.criarNotificacao(titulo, msg, user);
 
         return PurchaseResponse.fromEntity(purchase);
     }
@@ -131,7 +153,7 @@ public class PurchaseService {
         return PurchaseResponse.fromEntity(purchase);
     }
 
-    // --------- CREDIT (MANUAL OU AUTOMÁTICO) ----------
+    // --------- CREDIT ----------
     @Transactional
     public PurchaseResponse credit(Long purchaseId, Long userId) {
         Purchase purchase = purchaseRepository.findById(purchaseId)
@@ -153,6 +175,10 @@ public class PurchaseService {
 
         programRepository.save(program);
         purchaseRepository.save(purchase);
+
+        String titulo = "Pontos Creditados! ✈️";
+        String msg = "Parabéns! " + purchase.getPointsGenerated() + " pontos foram adicionados ao programa " + program.getName() + ".";
+        notificationService.criarNotificacao(titulo, msg, purchase.getUser());
 
         return PurchaseResponse.fromEntity(purchase);
     }

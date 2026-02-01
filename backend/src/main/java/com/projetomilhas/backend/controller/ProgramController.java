@@ -28,7 +28,8 @@ public class ProgramController {
 
     @PostMapping
     public ProgramResponse criar(@RequestBody Program program) {
-        Program salvo = programService.create(program);
+        // ✅ usa o método que valida e impede nome duplicado
+        Program salvo = programService.criar(program);
         return ProgramResponse.fromEntity(salvo);
     }
 }

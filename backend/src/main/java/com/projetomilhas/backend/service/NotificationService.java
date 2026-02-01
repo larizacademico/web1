@@ -14,25 +14,27 @@ public class NotificationService {
 
     private final NotificationRepository repository;
 
-    // Listar notificações do usuário
-    public List<Notification> listarPorUsuario(Long userId) {
-        return repository.findByUserIdOrderByCreatedAtDesc(userId);
-    }
-
-    // Marcar como lida
-    public void marcarComoLida(Long id) {
-        repository.findById(id).ifPresent(n -> {
-            n.setRead(true);
-            repository.save(n);
-        });
-    }
-
-    // Método para CRIAR notificação (usaremos isso quando salvar uma compra)
+    // ✅ Método chamado pelo PURCHASE SERVICE para criar o alerta
     public void criarNotificacao(String titulo, String mensagem, UserEntity user) {
         Notification n = new Notification();
         n.setTitle(titulo);
         n.setMessage(mensagem);
         n.setUser(user);
+        // A data (createdAt) e o status (read=false) são definidos automaticamente na Entidade
+
         repository.save(n);
+    }
+
+    // ✅ Método chamado pelo CONTROLLER para mostrar na tela
+    public List<Notification> listarPorUsuario(Long userId) {
+        return repository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
+    // ✅ Método chamado pelo CONTROLLER para marcar como lida
+    public void marcarComoLida(Long id) {
+        repository.findById(id).ifPresent(n -> {
+            n.setRead(true); // O Lombok gera o setRead se o campo for boolean
+            repository.save(n);
+        });
     }
 }

@@ -22,8 +22,17 @@ export default function Compras() {
 
   async function registrarCompra(e) {
     e.preventDefault();
+    
+    // 1. Validação do Cartão
     if (!cartaoId) {
       alert("Cadastre um cartão primeiro!");
+      return;
+    }
+
+    // 2. Validação do Arquivo (AJUSTE PRINCIPAL)
+    // Se não tiver arquivo, para a execução aqui e avisa o usuário
+    if (!arquivo) {
+      alert("⚠️ É obrigatório anexar o comprovante da compra!");
       return;
     }
 
@@ -32,22 +41,19 @@ export default function Compras() {
     formData.append("description", descricao);
     formData.append("amount", valor);
     
-    // Só anexa o arquivo se o usuário tiver selecionado um
-    if (arquivo) {
-      formData.append("file", arquivo);
-    }
+    // Agora anexamos direto, sem 'if', pois a validação acima já garantiu que ele existe
+    formData.append("file", arquivo);
 
     try {
-      // ✅ CORREÇÃO AQUI: 
-      // Removemos o { headers: ... }. O Axios agora detecta automaticamente 
-      // que é um FormData e configura o 'boundary' correto para o Java ler os dados.
+      // Envia o FormData. O Axios detecta que é arquivo e ajusta o header sozinho.
       await api.post("/api/purchases", formData);
       
       alert("Compra registrada e pontos calculados! ✈️");
       navigate("/dashboard");
     } catch (err) {
       console.error("Erro no envio:", err);
-      alert("Erro ao registrar compra.");
+      // Feedback melhor caso o erro venha do backend
+      alert(err?.response?.data?.message || "Erro ao registrar compra.");
     }
   }
 
@@ -101,11 +107,12 @@ export default function Compras() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-            <label>Comprovante (Imagem/PDF):</label>
+            <label>Comprovante (Imagem/PDF): <span style={{color: 'red'}}>*</span></label>
             <input 
             type="file" 
             accept="image/*,.pdf"
             onChange={e => setArquivo(e.target.files[0])} 
+            required  // <--- AJUSTE NO HTML: O navegador bloqueia se estiver vazio
             style={{background: "#333", padding: "10px", borderRadius: "5px", color: "#ccc"}}
             />
         </div>
