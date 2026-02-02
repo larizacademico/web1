@@ -13,16 +13,14 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* O segredo está aqui: garantir que o root ocupe 100% */
 body, #root {
   width: 100%;
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  display: block; /* Garante que não use flexbox centralizado padrão */
+  display: block; 
 }
 
-/* Remove margens padrões de botões e links */
 a {
   font-weight: 500;
   color: #646cff;

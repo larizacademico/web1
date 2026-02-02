@@ -38,64 +38,63 @@ export default function MeusCartoes() {
   }
 
   function editar(cartao) {
-    // reaproveita seu formulário atual via state
     navigate("/cartoes", { state: cartao });
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#121214", color: "#fff" }}>
+    <div style={{ minHeight: "100vh", background: "#f3f4f6", color: "#111827" }}>
       <Navbar />
 
-      <div style={{ padding: 20, maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h2 style={{ margin: 0 }}>Meus Cartões</h2>
+      <div style={{ padding: 22, maxWidth: 980, margin: "0 auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 12, flexWrap: "wrap" }}>
+          <h2 style={{ margin: 0, fontWeight: 900 }}>Meus Cartões</h2>
 
           <button
             onClick={() => navigate("/cartoes")}
-            style={{ padding: "10px 14px", background: "#0d6efd", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", fontWeight: "bold" }}
+            style={{ padding: "10px 14px", background: "#ec4899", color: "#fff", border: "none", borderRadius: 12, cursor: "pointer", fontWeight: 900, boxShadow: "0 10px 18px rgba(236,72,153,.18)" }}
           >
             + Adicionar cartão
           </button>
         </div>
 
         {loading ? (
-          <div>Carregando...</div>
+          <div style={{ color: "#6b7280" }}>Carregando...</div>
         ) : cartoes.length === 0 ? (
-          <div style={{ background: "#202024", padding: 20, borderRadius: 10, color: "#aaa" }}>
+          <div style={{ background: "#ffffff", padding: 18, borderRadius: 18, color: "#6b7280", border: "1px solid #e5e7eb", boxShadow: "0 10px 22px rgba(0,0,0,.06)" }}>
             Nenhum cartão cadastrado.
           </div>
         ) : (
-          <div style={{ background: "#202024", borderRadius: 10, overflow: "hidden" }}>
+          <div style={{ background: "#ffffff", borderRadius: 18, overflow: "hidden", border: "1px solid #e5e7eb", boxShadow: "0 10px 22px rgba(0,0,0,.06)" }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead>
-                <tr style={{ textAlign: "left", color: "#aaa", borderBottom: "1px solid #323238" }}>
-                  <th style={{ padding: 12 }}>Nome</th>
-                  <th>Bandeira</th>
-                  <th>Tipo</th>
-                  <th>Limite</th>
-                  <th>Programa</th>
-                  <th style={{ width: 120 }}>Ações</th>
+                <tr style={{ textAlign: "left", color: "#6b7280", borderBottom: "1px solid #e5e7eb" }}>
+                  <th style={{ padding: 12, fontWeight: 900 }}>Nome</th>
+                  <th style={{ fontWeight: 900 }}>Bandeira</th>
+                  <th style={{ fontWeight: 900 }}>Tipo</th>
+                  <th style={{ fontWeight: 900 }}>Limite</th>
+                  <th style={{ fontWeight: 900 }}>Programa</th>
+                  <th style={{ width: 140, fontWeight: 900 }}>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {cartoes.map((c) => (
-                  <tr key={c.id} style={{ borderBottom: "1px solid #323238" }}>
-                    <td style={{ padding: 12, fontWeight: "bold" }}>{c.name}</td>
-                    <td>{c.brand || "—"}</td>
-                    <td>{c.type || "—"}</td>
-                    <td>{c.limit != null ? `R$ ${c.limit}` : "—"}</td>
-                    <td>{c.programs?.[0]?.name || "—"}</td>
-                    <td>
+                  <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: 12, fontWeight: 900 }}>{c.name}</td>
+                    <td style={{ padding: 12 }}>{c.brand || "—"}</td>
+                    <td style={{ padding: 12 }}>{c.type || "—"}</td>
+                    <td style={{ padding: 12 }}>{c.limit != null ? `R$ ${c.limit}` : "—"}</td>
+                    <td style={{ padding: 12 }}>{c.programs?.[0]?.name || "—"}</td>
+                    <td style={{ padding: 12 }}>
                       <div style={{ display: "flex", gap: 8 }}>
                         <button
                           onClick={() => editar(c)}
-                          style={{ padding: "6px 10px", background: "#333", color: "#fff", border: "1px solid #444", borderRadius: 6, cursor: "pointer" }}
+                          style={{ padding: "8px 10px", background: "#3b82f6", color: "#fff", border: "none", borderRadius: 12, cursor: "pointer", fontWeight: 900, boxShadow: "0 10px 18px rgba(59,130,246,.18)" }}
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => excluirCartao(c.id)}
-                          style={{ padding: "6px 10px", background: "#dc3545", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}
+                          style={{ padding: "8px 10px", background: "#ef4444", color: "#fff", border: "none", borderRadius: 12, cursor: "pointer", fontWeight: 900, boxShadow: "0 10px 18px rgba(239,68,68,.18)" }}
                         >
                           Excluir
                         </button>

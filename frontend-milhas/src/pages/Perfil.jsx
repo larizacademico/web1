@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
+import Navbar from "../components/Navbar";
 
 export default function Perfil() {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ export default function Perfil() {
       const res = await api.get("/api/user/me");
       setName(res.data?.name || "");
       setEmail(res.data?.email || "");
-      
-      // Garante que o localStorage esteja sincronizado ao carregar também
+
       if (res.data?.name) {
         localStorage.setItem("userName", res.data.name);
       }
@@ -42,7 +42,6 @@ export default function Perfil() {
 
   useEffect(() => {
     carregarPerfil();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function salvar(e) {
@@ -58,8 +57,6 @@ export default function Perfil() {
 
       await api.put("/api/user/me", payload);
 
-      // --- ATUALIZAÇÃO DO NOME NA NAVBAR ---
-      // Atualizamos o localStorage com o novo nome
       localStorage.setItem("userName", name);
 
       alert("Perfil atualizado com sucesso.");
@@ -67,8 +64,7 @@ export default function Perfil() {
       setCurrentPassword("");
       setNewPassword("");
 
-      // Recarrega a página para que o Navbar pegue o novo nome imediatamente
-      window.location.reload(); 
+      window.location.reload();
 
     } catch (err) {
       console.error(err);
@@ -78,7 +74,7 @@ export default function Perfil() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#222", color: "#fff", padding: 20 }}>
+      <div style={{ minHeight: "100vh", background: "#f3f4f6", color: "#111827", padding: 22 }}>
         Carregando...
       </div>
     );
@@ -86,76 +82,79 @@ export default function Perfil() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h2 style={{ margin: 0 }}>Meu perfil</h2>
-          <button type="button" onClick={() => navigate("/dashboard")} style={styles.btnVoltar}>
-            Voltar
-          </button>
+      <Navbar />
+      <div style={styles.wrap}>
+        <div style={styles.card}>
+          <div style={styles.header}>
+            <h2 style={{ margin: 0, fontWeight: 900 }}>Meu perfil</h2>
+            <button type="button" onClick={() => navigate("/dashboard")} style={styles.btnVoltar}>
+              Voltar
+            </button>
+          </div>
+
+          <form onSubmit={salvar} style={styles.form}>
+            <div style={styles.field}>
+              <label style={styles.label}>Nome</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                style={styles.input}
+                placeholder="Seu nome"
+              />
+            </div>
+
+            <div style={styles.field}>
+              <label style={styles.label}>Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                style={styles.input}
+                placeholder="seuemail@exemplo.com"
+              />
+            </div>
+
+            <div style={styles.divider} />
+
+            <div>
+              <div style={styles.sectionTitle}>Alterar senha (opcional)</div>
+
+              <div style={styles.grid2}>
+                <div style={styles.field}>
+                  <label style={styles.label}>Senha atual</label>
+                  <input
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    style={styles.input}
+                    placeholder="Sua senha atual"
+                  />
+                </div>
+
+                <div style={styles.field}>
+                  <label style={styles.label}>Nova senha</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={styles.input}
+                    placeholder="Digite a nova senha"
+                  />
+                </div>
+              </div>
+
+              <div style={styles.hint}>
+                Dica: para trocar a senha, preencha “Nova senha” e confirme com a “Senha atual”.
+              </div>
+            </div>
+
+            <button type="submit" style={styles.btnSalvar}>
+              Salvar alterações
+            </button>
+          </form>
         </div>
-
-        <form onSubmit={salvar} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Nome</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              style={styles.input}
-              placeholder="Seu nome"
-            />
-          </div>
-
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={styles.input}
-              placeholder="seuemail@exemplo.com"
-            />
-          </div>
-
-          <div style={styles.divider} />
-
-          <div>
-            <div style={styles.sectionTitle}>Alterar senha (opcional)</div>
-
-            <div style={styles.grid2}>
-              <div style={styles.field}>
-                <label style={styles.label}>Senha atual</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  style={styles.input}
-                  placeholder="Sua senha atual"
-                />
-              </div>
-
-              <div style={styles.field}>
-                <label style={styles.label}>Nova senha</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  style={styles.input}
-                  placeholder="Digite a nova senha"
-                />
-              </div>
-            </div>
-
-            <div style={styles.hint}>
-              Dica: para trocar a senha, preencha “Nova senha” e confirme com a “Senha atual”.
-            </div>
-          </div>
-
-          <button type="submit" style={styles.btnSalvar}>
-            Salvar alterações
-          </button>
-        </form>
       </div>
     </div>
   );
@@ -164,19 +163,23 @@ export default function Perfil() {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#222",
-    color: "#fff",
+    background: "#f3f4f6",
+    color: "#111827",
+  },
+  wrap: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20
+    padding: 22
   },
   card: {
     width: "100%",
-    maxWidth: 520,
-    background: "#2b2b2b",
-    padding: 22,
-    borderRadius: 12
+    maxWidth: 560,
+    background: "#ffffff",
+    padding: 18,
+    borderRadius: 18,
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 10px 22px rgba(0,0,0,.06)"
   },
   header: {
     display: "flex",
@@ -196,26 +199,29 @@ const styles = {
   },
   label: {
     fontSize: 13,
-    color: "#d0d0d0"
+    color: "#374151",
+    fontWeight: 900
   },
   input: {
     padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #555",
-    background: "#333",
-    color: "white",
+    borderRadius: 12,
+    border: "1px solid #e5e7eb",
+    background: "#f9fafb",
+    color: "#111827",
     width: "100%",
-    boxSizing: "border-box"
+    boxSizing: "border-box",
+    outline: "none"
   },
   divider: {
     marginTop: 4,
-    borderTop: "1px solid #444"
+    borderTop: "1px solid #e5e7eb"
   },
   sectionTitle: {
     marginTop: 10,
     marginBottom: 10,
-    color: "#bbb",
-    fontSize: 13
+    color: "#6b7280",
+    fontSize: 13,
+    fontWeight: 900
   },
   grid2: {
     display: "grid",
@@ -225,24 +231,27 @@ const styles = {
   hint: {
     marginTop: 10,
     fontSize: 12,
-    color: "#aaa"
+    color: "#6b7280"
   },
   btnVoltar: {
-    padding: "8px 12px",
-    background: "#666",
-    color: "#fff",
-    border: "none",
-    borderRadius: 8,
-    cursor: "pointer"
+    padding: "10px 12px",
+    background: "#ffffff",
+    color: "#111827",
+    border: "1px solid #e5e7eb",
+    borderRadius: 12,
+    cursor: "pointer",
+    fontWeight: 900,
+    boxShadow: "0 6px 16px rgba(0,0,0,.06)"
   },
   btnSalvar: {
     marginTop: 6,
     padding: "12px",
-    background: "#28a745",
+    background: "#ec4899",
     color: "#fff",
     border: "none",
-    borderRadius: "8px",
+    borderRadius: 12,
     cursor: "pointer",
-    fontWeight: "bold"
+    fontWeight: 900,
+    boxShadow: "0 10px 18px rgba(236,72,153,.18)"
   }
 };

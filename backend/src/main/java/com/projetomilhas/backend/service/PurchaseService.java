@@ -41,7 +41,7 @@ public class PurchaseService {
         }
 
         // =================================================================================
-        // 🛑 ✅ NOVA VALIDAÇÃO DE LIMITE
+        // NOVA VALIDAÇÃO DE LIMITE
         Double totalGasto = purchaseRepository.somarGastosPorCartao(card.getId());
         Double valorNovaCompra = request.getAmount();
         Double limiteCartao = card.getLimit();
@@ -82,8 +82,6 @@ public class PurchaseService {
         purchase.setPointsGenerated(pontosGerados);
 
 
-        // 👇👇👇 AQUI ESTÁ A ALTERAÇÃO PARA O TESTE RÁPIDO 👇👇👇
-
         // Linha original (DESATIVADA TEMPORARIAMENTE):
         // LocalDateTime creditDate = LocalDateTime.now().plusDays(program.getDefaultCreditDays());
 
@@ -91,8 +89,6 @@ public class PurchaseService {
         LocalDateTime creditDate = LocalDateTime.now().minusMinutes(1);
 
         purchase.setExpectedCreditDate(creditDate);
-        // 👆👆👆 FIM DA ALTERAÇÃO 👆👆👆
-
 
         purchaseRepository.save(purchase);
 

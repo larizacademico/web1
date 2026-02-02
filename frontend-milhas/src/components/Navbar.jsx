@@ -28,7 +28,7 @@ export default function Navbar() {
       <div style={styles.menu}>
         {/* Link para o Perfil */}
         <Link to="/perfil" style={styles.userBadge}>
-          Olá, <span style={{ color: "#fff", fontWeight: "bold" }}>{userName}</span>
+          Olá, <span style={{ color: "#ec4899", fontWeight: "900" }}>{userName}</span>
         </Link>
 
         {/* Links do Menu */}
@@ -36,7 +36,6 @@ export default function Navbar() {
           Início
         </Link>
 
-        {/* ✅ NOVO: Meus Cartões */}
         <Link to="/meus-cartoes" style={styles.link}>
           Meus Cartões
         </Link>
@@ -62,51 +61,63 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "15px 30px",
-    background: "#121214",
-    borderBottom: "1px solid #29292e",
-    color: "#fff",
+    padding: "14px 22px",
+    background: "#ffffff",
+    borderBottom: "1px solid #e5e7eb",
+    color: "#111827",
+    position: "sticky",
+    top: 0,
+    zIndex: 50,
   },
   logo: {
-    fontSize: "20px",
-    fontWeight: "bold",
+    fontSize: "18px",
+    fontWeight: "900",
     cursor: "pointer",
-    color: "#fff"
+    color: "#111827",
+    letterSpacing: "0.2px",
   },
   menu: {
     display: "flex",
     alignItems: "center",
-    gap: "20px",
+    gap: "10px",
+    flexWrap: "wrap",
   },
   userBadge: {
-    background: "#202024",
-    padding: "8px 16px",
-    borderRadius: "20px",
-    fontSize: "14px",
-    color: "#a8a8b3",
+    background: "#fce7f3",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    fontSize: "13px",
+    color: "#831843",
     textDecoration: "none",
-    border: "1px solid #323238",
-    transition: "0.2s",
+    border: "1px solid #fbcfe8",
     cursor: "pointer",
-    display: "flex",
-    gap: "5px"
+    display: "inline-flex",
+    gap: "6px",
+    alignItems: "center",
+    fontWeight: "800",
   },
   link: {
-    color: "#e1e1e6",
+    background: "#f3f4f6",
+    padding: "10px 14px",
+    borderRadius: "999px",
+    border: "1px solid #e5e7eb",
+    color: "#111827",
     textDecoration: "none",
-    fontSize: "15px",
-    fontWeight: "500",
-    transition: "color 0.2s",
-    cursor: "pointer"
+    fontSize: "13px",
+    fontWeight: "800",
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
   },
   btnSair: {
-    padding: "8px 16px",
-    background: "#dc3545",
+    padding: "10px 14px",
+    background: "#ef4444",
     color: "#fff",
     border: "none",
-    borderRadius: "5px",
+    borderRadius: "12px",
     cursor: "pointer",
-    fontWeight: "bold",
-    fontSize: "14px"
+    fontWeight: "900",
+    fontSize: "13px",
+    boxShadow: "0 10px 18px rgba(239,68,68,.18)",
   },
 };

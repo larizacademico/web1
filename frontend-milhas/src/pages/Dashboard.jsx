@@ -46,7 +46,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     carregarDados();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function extrairFilename(contentDisposition, fallback) {
@@ -131,7 +130,6 @@ export default function Dashboard() {
     return Array.from(mapa.entries()).map(([name, pontos]) => ({ name, pontos }));
   }, [compras]);
 
-  // Maps para resolver programa (por id e por nome)
   const programasPorId = useMemo(() => {
     const m = new Map();
     for (const p of programas) {
@@ -150,7 +148,6 @@ export default function Dashboard() {
     return m;
   }, [programas]);
 
-  // ✅ CORRIGIDO: não duplica programa por "id:" vs "name:"
   const dadosPontosPorPrograma = useMemo(() => {
     const mapa = new Map();
 
@@ -161,7 +158,6 @@ export default function Dashboard() {
       const rawId = c.programId ?? c.program?.id ?? null;
       const rawName = c.programName ?? c.program?.name ?? null;
 
-      // resolve o programa usando /api/programs
       let resolvedProgram = null;
       if (rawId != null) {
         resolvedProgram = programasPorId.get(Number(rawId)) || null;
@@ -198,7 +194,6 @@ export default function Dashboard() {
       if (status === "CREDITED") atual.credited += pontos;
       else if (status === "PENDING") atual.pending += pontos;
 
-      // se antes não tinha balance e agora achou o programa, atualiza
       if (atual.disponivel === 0 && resolvedProgram) {
         atual.disponivel = Number(resolvedProgram.balance || 0);
       }
@@ -216,168 +211,138 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div style={{ background: "#121214", color: "#fff", height: "100vh", padding: "20px" }}>
+      <div style={{ background: TOKENS.bg, color: TOKENS.text, height: "100vh", padding: 22 }}>
         Carregando...
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#121214", color: "#fff" }}>
+    <div style={styles.page}>
       <Navbar />
 
-      <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
-        {/* Topo */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ margin: 0, fontSize: "24px" }}>Visão Geral</h2>
+      <div style={styles.container}>
+        <div style={styles.header}>
+          <h2 style={styles.title}>Visão Geral</h2>
 
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <button
-              onClick={() => navigate("/meus-cartoes")}
-              style={{
-                padding: "8px 15px",
-                background: "#333",
-                color: "#fff",
-                border: "1px solid #444",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontWeight: "bold"
-              }}
-            >
+          <div style={styles.headerActions}>
+            <button onClick={() => navigate("/meus-cartoes")} style={styles.btnSecondary}>
               💳 Meus Cartões
             </button>
 
-            <button
-              onClick={exportarCSV}
-              style={{
-                padding: "8px 15px",
-                background: "#0d6efd",
-                color: "#fff",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontWeight: "bold"
-              }}
-            >
+            <button onClick={exportarCSV} style={styles.btnPrimary}>
               📥 Exportar CSV
             </button>
 
-            <button
-              onClick={exportarPDF}
-              style={{
-                padding: "8px 15px",
-                background: "#198754",
-                color: "#fff",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-                fontWeight: "bold"
-              }}
-            >
+            <button onClick={exportarPDF} style={styles.btnSecondarySoft}>
               📄 Exportar PDF
             </button>
           </div>
         </div>
 
-        {/* Cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "20px",
-            marginBottom: "30px"
-          }}
-        >
-          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #28a745" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Total de Pontos (Creditados)</h3>
-            <span style={{ fontSize: "28px", fontWeight: "bold" }}>{resumoPontos.total}</span>
+        <div style={styles.gridCards}>
+          <div style={{ ...styles.card, borderLeft: `6px solid ${TOKENS.rosa}` }}>
+            <h3 style={styles.cardLabel}>Total de Pontos (Creditados)</h3>
+            <span style={styles.cardValue}>{resumoPontos.total}</span>
           </div>
 
-          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #ffc107" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Pontos a Receber (Pendentes)</h3>
-            <span style={{ fontSize: "28px", fontWeight: "bold", color: "#ffc107" }}>{resumoPontos.pendente}</span>
+          <div style={{ ...styles.card, borderLeft: "6px solid #f59e0b" }}>
+            <h3 style={styles.cardLabel}>Pontos a Receber (Pendentes)</h3>
+            <span style={{ ...styles.cardValue, color: "#92400e" }}>{resumoPontos.pendente}</span>
           </div>
 
-          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #007bff" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Cartões Ativos</h3>
-            <span style={{ fontSize: "28px", fontWeight: "bold" }}>{cartoes.length}</span>
+          <div style={{ ...styles.card, borderLeft: "6px solid #3b82f6" }}>
+            <h3 style={styles.cardLabel}>Cartões Ativos</h3>
+            <span style={styles.cardValue}>{cartoes.length}</span>
           </div>
 
-          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #17a2b8" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Programas Ativos</h3>
-            <span style={{ fontSize: "28px", fontWeight: "bold" }}>{programasAtivos}</span>
+          <div style={{ ...styles.card, borderLeft: "6px solid #10b981" }}>
+            <h3 style={styles.cardLabel}>Programas Ativos</h3>
+            <span style={styles.cardValue}>{programasAtivos}</span>
           </div>
 
-          <div style={{ background: "#202024", padding: "20px", borderRadius: "8px", borderLeft: "5px solid #9c27b0" }}>
-            <h3 style={{ margin: "0 0 10px 0", fontSize: "16px", color: "#a8a8b3" }}>Prazo Médio Previsto</h3>
-            <span style={{ fontSize: "28px", fontWeight: "bold" }}>
+          <div style={{ ...styles.card, borderLeft: "6px solid #8b5cf6" }}>
+            <h3 style={styles.cardLabel}>Prazo Médio Previsto</h3>
+            <span style={styles.cardValue}>
               {prazoMedioPrevistoDias ? `${prazoMedioPrevistoDias.toFixed(1)} dias` : "—"}
             </span>
           </div>
         </div>
 
-        {/* Gráficos lado a lado */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "30px" }}>
-          <div style={{ width: "100%", height: 320, background: "#202024", padding: "20px", borderRadius: "8px" }}>
-            <h3 style={{ marginBottom: "20px", color: "#e1e1e6" }}>Pontos por Cartão</h3>
+        <div style={styles.gridCharts}>
+          <div style={styles.chartCard}>
+            <h3 style={styles.chartTitle}>Pontos por Cartão</h3>
             {dadosPontosPorCartao.length === 0 ? (
-              <div style={{ color: "#aaa" }}>Sem dados.</div>
+              <div style={styles.emptyState}>Sem dados.</div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosPontosPorCartao}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                  <XAxis dataKey="name" stroke="#ccc" />
-                  <YAxis stroke="#ccc" />
-                  <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
-                  <Legend />
-                  <Bar dataKey="pontos" fill="#8257e5" name="Pontos" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={styles.chartArea}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dadosPontosPorCartao} margin={{ top: 8, right: 10, left: 0, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={TOKENS.grid} />
+                    <XAxis dataKey="name" tick={{ fill: TOKENS.muted }} />
+                    <YAxis tick={{ fill: TOKENS.muted }} />
+                    <Tooltip contentStyle={styles.tooltip} />
+                    <Legend verticalAlign="top" align="center" height={28} />
+                    <Bar dataKey="pontos" fill={TOKENS.rosa} name="Pontos" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
 
-          <div style={{ width: "100%", height: 320, background: "#202024", padding: "20px", borderRadius: "8px" }}>
-            <h3 style={{ marginBottom: "20px", color: "#e1e1e6" }}>Pontos por Programa (Previsto)</h3>
+          <div style={styles.chartCard}>
+            <h3 style={styles.chartTitle}>Pontos por Programa (Previsto)</h3>
             {dadosPontosPorPrograma.length === 0 ? (
-              <div style={{ color: "#aaa" }}>Sem dados.</div>
+              <div style={styles.emptyState}>Sem dados.</div>
             ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosPontosPorPrograma}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                  <XAxis dataKey="name" stroke="#ccc" />
-                  <YAxis stroke="#ccc" />
-                  <Tooltip contentStyle={{ backgroundColor: "#333", border: "none", color: "#fff" }} />
-                  <Legend />
-                  <Bar dataKey="previsto" fill="#20c997" name="Previsto (Disponível + Pendente)" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={styles.chartArea}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dadosPontosPorPrograma} margin={{ top: 8, right: 10, left: 0, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={TOKENS.grid} />
+                    <XAxis dataKey="name" tick={{ fill: TOKENS.muted }} />
+                    <YAxis tick={{ fill: TOKENS.muted }} />
+                    <Tooltip contentStyle={styles.tooltip} />
+                    <Legend verticalAlign="top" align="center" height={28} />
+                    <Bar dataKey="previsto" fill="#10b981" name="Previsto (Disponível + Pendente)" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
           </div>
         </div>
 
         {/* Tabela Programas */}
         {dadosPontosPorPrograma.length > 0 && (
-          <div style={{ background: "#202024", padding: "20px", borderRadius: "10px", marginBottom: "30px" }}>
-            <h3 style={{ borderBottom: "1px solid #323238", paddingBottom: "10px", marginBottom: "15px" }}>
-              Programas
-            </h3>
-
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+          <div style={styles.tableCard}>
+            <h3 style={styles.tableTitle}>Programas</h3>
+            <table style={styles.table}>
               <thead>
-                <tr style={{ textAlign: "left", color: "#aaa", borderBottom: "1px solid #323238" }}>
-                  <th style={{ padding: "10px" }}>Programa</th>
-                  <th>Disponível</th>
-                  <th>Pendente</th>
-                  <th>Previsto</th>
+                <tr style={styles.trHead}>
+                  <th style={styles.th}>Programa</th>
+                  <th style={styles.th}>Disponível</th>
+                  <th style={styles.th}>Pendente</th>
+                  <th style={styles.th}>Previsto</th>
                 </tr>
               </thead>
               <tbody>
                 {dadosPontosPorPrograma.map((p) => (
-                  <tr key={`${p.programId ?? "x"}-${p.name}`} style={{ borderBottom: "1px solid #323238" }}>
-                    <td style={{ padding: "10px" }}>{p.name}</td>
-                    <td style={{ fontWeight: "bold" }}>{p.disponivel}</td>
-                    <td style={{ fontWeight: "bold", color: "#ffc107" }}>{p.pending}</td>
-                    <td style={{ fontWeight: "bold" }}>{p.previsto}</td>
+                  <tr key={`${p.programId ?? "x"}-${p.name}`} style={styles.tr}>
+                    <td style={styles.td}>{p.name}</td>
+
+                    {/* Disponível: Verde */}
+                    <td style={styles.td}>
+                      <span style={styles.cellGreen}>{p.disponivel}</span>
+                    </td>
+
+                    {/* Pendente: Amarelo */}
+                    <td style={styles.td}>
+                      <span style={styles.cellAmber}>{p.pending}</span>
+                    </td>
+
+                    {/* Previsto: Roxo */}
+                    <td style={styles.td}>
+                      <span style={styles.cellPurple}>{p.previsto}</span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -385,51 +350,42 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Histórico */}
-        <div style={{ background: "#202024", padding: "20px", borderRadius: "10px" }}>
-          <h3 style={{ borderBottom: "1px solid #323238", paddingBottom: "10px", marginBottom: "15px" }}>
-            Histórico de Aquisições
-          </h3>
-
+        <div style={styles.tableCard}>
+          <h3 style={styles.tableTitle}>Histórico de Aquisições</h3>
           {compras.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#aaa", padding: "20px" }}>Nenhuma compra registrada.</p>
+            <p style={styles.emptyState}>Nenhuma compra registrada.</p>
           ) : (
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+            <table style={styles.table}>
               <thead>
-                <tr style={{ textAlign: "left", color: "#aaa", borderBottom: "1px solid #323238" }}>
-                  <th style={{ padding: "10px" }}>Data</th>
-                  <th>Descrição</th>
-                  <th>Cartão</th>
-                  <th>Pontos</th>
-                  <th>Status</th>
+                <tr style={styles.trHead}>
+                  <th style={styles.th}>Data</th>
+                  <th style={styles.th}>Descrição</th>
+                  <th style={styles.th}>Cartão</th>
+                  <th style={styles.th}>Pontos</th>
+                  <th style={styles.th}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {compras.map((compra) => {
                   const status = (compra.status || "").toUpperCase();
                   const cardName =
-                    compra.cardName || compra.card?.name || (compra.cardId ? `Cartão ${compra.cardId}` : "N/A");
+                    compra.cardName ||
+                    compra.card?.name ||
+                    (compra.cardId ? `Cartão ${compra.cardId}` : "N/A");
                   const dataCompra = compra.purchaseDate || compra.createdAt;
 
                   return (
-                    <tr key={compra.id} style={{ borderBottom: "1px solid #323238" }}>
-                      <td style={{ padding: "10px" }}>
+                    <tr key={compra.id} style={styles.tr}>
+                      <td style={styles.td}>
                         {dataCompra ? new Date(dataCompra).toLocaleDateString("pt-BR") : "-"}
                       </td>
-                      <td>{compra.description || "—"}</td>
-                      <td>{cardName}</td>
-                      <td style={{ fontWeight: "bold", color: "#fff" }}>+{compra.pointsGenerated || 0}</td>
-                      <td>
-                        <span
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "4px",
-                            fontSize: "11px",
-                            fontWeight: "bold",
-                            background: status === "PENDING" ? "#ffc107" : "#28a745",
-                            color: "#000"
-                          }}
-                        >
+                      <td style={styles.td}>{compra.description || "—"}</td>
+                      <td style={styles.td}>{cardName}</td>
+                      <td style={{ ...styles.td, fontWeight: 900, color: "#111827" }}>
+                        +{compra.pointsGenerated || 0}
+                      </td>
+                      <td style={styles.td}>
+                        <span style={status === "PENDING" ? styles.badgePending : styles.badgeSuccess}>
                           {status === "PENDING" ? "PENDENTE" : "CREDITADO"}
                         </span>
                       </td>
@@ -444,3 +400,191 @@ export default function Dashboard() {
     </div>
   );
 }
+
+/* ===== Tema: claro neutro + rosa só de acento ===== */
+const TOKENS = {
+  bg: "#f6f7fb",
+  surface: "#ffffff",
+  border: "#e5e7eb",
+  softBorder: "#f1f5f9",
+  text: "#111827",
+  muted: "#6b7280",
+  grid: "#eef2f7",
+  rosa: "#db2777",
+  rosaSoft: "#fce7f3"
+};
+
+const styles = {
+  page: { minHeight: "100vh", background: TOKENS.bg, color: TOKENS.text },
+  container: { padding: 22, maxWidth: 1200, margin: "0 auto" },
+
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 18,
+    flexWrap: "wrap",
+    gap: 12
+  },
+  title: { margin: 0, fontSize: 28, fontWeight: 900, color: TOKENS.text },
+  headerActions: { display: "flex", gap: 10, flexWrap: "wrap" },
+
+  btnSecondary: {
+    padding: "10px 14px",
+    background: TOKENS.surface,
+    color: TOKENS.text,
+    border: `1px solid ${TOKENS.border}`,
+    borderRadius: 12,
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: 13,
+    boxShadow: "0 6px 16px rgba(0,0,0,.05)"
+  },
+  btnSecondarySoft: {
+    padding: "10px 14px",
+    background: TOKENS.surface,
+    color: TOKENS.text,
+    border: `1px solid ${TOKENS.border}`,
+    borderRadius: 12,
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: 13,
+    boxShadow: "0 6px 16px rgba(0,0,0,.05)"
+  },
+  btnPrimary: {
+    padding: "10px 14px",
+    background: TOKENS.rosa,
+    color: "#fff",
+    border: "none",
+    borderRadius: 12,
+    cursor: "pointer",
+    fontWeight: 900,
+    fontSize: 13,
+    boxShadow: "0 12px 22px rgba(219,39,119,.22)"
+  },
+
+  gridCards: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: 14,
+    marginBottom: 18
+  },
+  card: {
+    background: TOKENS.surface,
+    padding: 16,
+    borderRadius: 18,
+    border: `1px solid ${TOKENS.border}`,
+    boxShadow: "0 12px 24px rgba(17,24,39,.06)",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    gap: 6
+  },
+  cardLabel: { margin: 0, fontSize: 13, color: TOKENS.muted, fontWeight: 800 },
+  cardValue: { fontSize: 26, fontWeight: 900, color: TOKENS.text },
+
+  gridCharts: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 },
+  chartCard: {
+    width: "100%",
+    height: 360,
+    background: TOKENS.surface,
+    padding: 16,
+    borderRadius: 18,
+    border: `1px solid ${TOKENS.border}`,
+    boxShadow: "0 12px 24px rgba(17,24,39,.06)",
+    overflow: "hidden"
+  },
+  chartTitle: { margin: "0 0 10px 0", color: TOKENS.text, fontSize: 14, fontWeight: 900 },
+  chartArea: {
+    height: 300,
+    borderRadius: 14,
+    background: "#fafafa",
+    border: `1px solid ${TOKENS.softBorder}`,
+    padding: 8
+  },
+
+  tooltip: {
+    backgroundColor: TOKENS.surface,
+    border: `1px solid ${TOKENS.border}`,
+    color: TOKENS.text,
+    borderRadius: 12
+  },
+  emptyState: { color: TOKENS.muted, textAlign: "center", padding: 16 },
+
+  tableCard: {
+    background: TOKENS.surface,
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 18,
+    border: `1px solid ${TOKENS.border}`,
+    boxShadow: "0 12px 24px rgba(17,24,39,.06)",
+    overflowX: "auto"
+  },
+  tableTitle: {
+    borderBottom: `1px solid ${TOKENS.softBorder}`,
+    paddingBottom: 10,
+    marginBottom: 10,
+    fontSize: 16,
+    fontWeight: 900,
+    color: TOKENS.text
+  },
+  table: { width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 600 },
+  trHead: { textAlign: "left", color: TOKENS.muted, borderBottom: `1px solid ${TOKENS.softBorder}` },
+  th: { padding: "10px 12px", fontWeight: 900 },
+  tr: { borderBottom: `1px solid ${TOKENS.softBorder}` },
+  td: { padding: "10px 12px", color: TOKENS.text },
+
+  badgePending: {
+    padding: "6px 10px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 900,
+    background: "#fef3c7",
+    color: "#92400e",
+    border: "1px solid #fde68a"
+  },
+  badgeSuccess: {
+    padding: "6px 10px",
+    borderRadius: 999,
+    fontSize: 11,
+    fontWeight: 900,
+    background: TOKENS.rosaSoft,
+    color: "#9d174d",
+    border: "1px solid #fbcfe8"
+  },
+
+  /* Chips da tabela Programas */
+  cellGreen: {
+    fontWeight: 900,
+    color: "#166534",
+    background: "#dcfce7",
+    border: "1px solid #bbf7d0",
+    borderRadius: 10,
+    padding: "6px 10px",
+    display: "inline-block",
+    minWidth: 70,
+    textAlign: "right"
+  },
+  cellAmber: {
+    fontWeight: 900,
+    color: "#92400e",
+    background: "#fef3c7",
+    border: "1px solid #fde68a",
+    borderRadius: 10,
+    padding: "6px 10px",
+    display: "inline-block",
+    minWidth: 70,
+    textAlign: "right"
+  },
+  cellPurple: {
+    fontWeight: 900,
+    color: "#5b21b6",
+    background: "#ede9fe",
+    border: "1px solid #ddd6fe",
+    borderRadius: 10,
+    padding: "6px 10px",
+    display: "inline-block",
+    minWidth: 70,
+    textAlign: "right"
+  }
+};
